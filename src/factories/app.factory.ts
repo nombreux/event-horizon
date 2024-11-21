@@ -3,15 +3,17 @@ import { ConsumerService } from '../services/consumer.service';
 import { ProducerService } from '../services/producer.service';
 import { DLQHandler } from '../services/dlq.service';
 import { MessageController } from '../controllers/message.controller';
+import { IngestionController } from '../controllers/ingestion.controller';
 import { DefaultKafkaFactory } from './kafka.factory';
 import { IAppFactory } from '../interfaces';
 
 export class AppFactory implements IAppFactory {
-  private kafkaFactory: DefaultKafkaFactory;
+  private readonly kafkaFactory: DefaultKafkaFactory;
   private consumerService?: ConsumerService;
   private producerService?: ProducerService;
   private dlqHandler?: DLQHandler;
   private messageController?: MessageController;
+  private ingestionController?: IngestionController;
 
   constructor(private readonly logger: Logger) {
     this.kafkaFactory = new DefaultKafkaFactory(logger);
@@ -35,6 +37,7 @@ export class AppFactory implements IAppFactory {
 
   getDLQHandler(): DLQHandler {
     if (!this.dlqHandler) {
+      // Ensure we reuse the same producer service instance
       const producerService = this.getProducerService();
       this.dlqHandler = new DLQHandler(producerService, this.logger);
     }
@@ -43,9 +46,19 @@ export class AppFactory implements IAppFactory {
 
   getMessageController(): MessageController {
     if (!this.messageController) {
+      // Get DLQHandler which will reuse the producer service
       const dlqHandler = this.getDLQHandler();
       this.messageController = new MessageController(this.logger, dlqHandler);
     }
     return this.messageController;
   }
-} 
+
+  getIngestionController(): IngestionController {
+    if (!this.ingestionController) {
+      // Ensure we reuse the same producer service instance
+      const producerService = this.getProducerService();
+      this.ingestionController = new IngestionController(this.logger, producerService);
+    }
+    return this.ingestionController;
+  }
+}

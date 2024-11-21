@@ -5,6 +5,7 @@ import { DLQHandler } from '../services/dlq.service';
 import { ProducerService } from '../services/producer.service';
 import { MessageProcessingError } from '../utils/error';
 import { TopicName } from './topic.types';
+import { IngestionController } from '../controllers/ingestion.controller';
 
 export interface KafkaClientFactory {
   createConsumer(): Consumer;
@@ -73,6 +74,7 @@ export interface IAppFactory {
   getProducerService(): ProducerService;
   getDLQHandler(): DLQHandler;
   getMessageController(): MessageController;
+  getIngestionController(): IngestionController;
 }
 
 export interface IDLQHandler {
